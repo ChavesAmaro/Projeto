@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import requests
+import creds
 
 df = pd.DataFrame()
 
@@ -21,9 +22,9 @@ avaliacao = []
 link_google = []
 
 
-def obter_link_google_books(titulo, autor, api_key):
+def obter_link_google_books(titulo, autor):
     query = f"{titulo} {autor}"
-    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={api_key}"
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={creds.api_key}"
     response = requests.get(url)
     data = response.json()
     
@@ -81,8 +82,7 @@ def adicionar_lista():
         except ValueError:
             print("Erro! O preco deve ser um valor numérico")
         
-        api_key = ""
-        link_google_books = obter_link_google_books(titulo_r, autor_r, api_key)
+        link_google_books = obter_link_google_books(titulo_r, autor_r)
         link_google.append(link_google_books)
 
         loop_verificacao = True
