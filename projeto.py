@@ -8,6 +8,9 @@ import requests
 #import creds
 from dotenv import load_dotenv
 import os
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
 df = pd.DataFrame()
 
@@ -125,7 +128,40 @@ def consultar_lista():
     print(df)
     print()
     
-
+def exportar_excel():
+    global df
+    if df.empty:
+        print("Erro! Lista vazia! ")
+        return
+    
+    nome_ficheiro = input("Introduza o nome do ficheiro a guardar: ")
+    
+    if not nome_ficheiro.endswith('.xlsx'):
+        nome_ficheiro += '.xlsx'
+    
+    try:
+        df.to_excel(nome_ficheiro, index=False)
+        print(f"Dados exportados com sucesso para: {nome_ficheiro}")
+    except Exception as erroexportexcel:
+        print(f"Erro ao gerar ficheiro: {erroexportexcel}")
+    print()
+    
+def importar_excel():
+    global df
+    
+    nome_ficheiro = input("Introduza o nome do ficheiro a importar: ")
+    
+    if not nome_ficheiro.endswith('.xlsx'):
+        nome_ficheiro += '.xlsx'
+    
+    try:
+        df = pd.read_excel(nome_ficheiro)
+        print(f"{nome_ficheiro} importado com sucesso!")
+    except FileNotFoundError:
+        print(f"{nome_ficheiro} não encontrado!")
+    except Exception as erroimportexcel:
+        print(f"Erro a importar o ficheiro: {erroimportexcel}")
+    print()
 
 def main():
     loop_menu = True
@@ -133,18 +169,24 @@ def main():
         print("\nMenu Principal")
         print("1. Adicionar Livro à Lista")
         print("2. Consultar Lista de Livros")
-        print("3. Sair")
+        print("3. Exportar a Lista Para Ficheiro .xlsx")
+        print("4. Importar a Lista de Ficheiro .xlsx")
+        print("5. Sair")
 
-        escolha_menu_principal = input("\nEscolha uma opção de 1 a 3: ").strip()
+        escolha_menu_principal = input("\nEscolha uma opção de 1 a 5: ").strip()
         
         if escolha_menu_principal == '1':
             adicionar_lista()
         elif escolha_menu_principal == '2':
             consultar_lista()
         elif escolha_menu_principal == '3':
+            exportar_excel()
+        elif escolha_menu_principal == '4':
+            importar_excel()
+        elif escolha_menu_principal == '5':
             print("\nA encerrar o programa...")
             loop_menu = False
         else:
-            print("Erro! Escolha um número de 1 a 3.")
+            print("Erro! Escolha um número de 1 a 5.")
 
 main()
