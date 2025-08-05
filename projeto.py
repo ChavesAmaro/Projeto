@@ -162,6 +162,39 @@ def importar_excel():
     except Exception as erroimportexcel:
         print(f"Erro a importar o ficheiro: {erroimportexcel}")
     print()
+    
+def export_pdf():
+    global df
+    if df.empty:
+        print("Erro! Lista vazia! ")
+        return
+    
+    nome_arquivo = input("Introduza o nome do ficheiro PDF a guardar: ")
+    if not nome_ficheiro.endswith('.pdf'):
+        nome_ficheiro += '.pdf'
+    
+    
+    doc = SimpleDocTemplate(nome_arquivo, pagesize=A4)
+    elementos = []
+
+    dados = [df.columns.tolist()] + df.values.tolist()
+    tabela = Table(dados)
+    
+    
+    estilo = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Arial'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+    ])
+    tabela.setStyle(estilo)
+
+    elementos.append(tabela)
+    doc.build(elementos)
+    print(f"PDF criado com sucesso com o nome: {nome_arquivo}")
 
 def main():
     loop_menu = True
