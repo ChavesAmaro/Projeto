@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import requests
-import creds
+#import creds
+from dotenv import load_dotenv
+import os
 
 df = pd.DataFrame()
 
@@ -21,10 +23,13 @@ tema_principal = []
 avaliacao = []
 link_google = []
 
+def configure():
+    load_dotenv()
 
 def obter_link_google_books(titulo, autor):
     query = f"{titulo} {autor}"
-    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={creds.api_key}"
+    #url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={creds.api_key}"
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={os.getenv('api_key')}"
     response = requests.get(url)
     data = response.json()
     
@@ -119,6 +124,8 @@ def consultar_lista():
     print("Lista de livros")
     print(df)
     print()
+    
+
 
 def main():
     loop_menu = True
