@@ -290,7 +290,7 @@ def tempo_estimado_leitura_formatado():
 def remover_livro():
     global df
     if df.empty:
-        print("Data Frame vazio! ")
+        print("Lista vazio! ")
         return
     consultar_lista()
     
@@ -310,7 +310,7 @@ def remover_livro():
 def editar_valor():
     global df
     if df.empty:
-        print("Data Frame vazio! ")
+        print("Lista vazia! ")
         return
     consultar_lista()
     try:
@@ -351,46 +351,68 @@ def editar_valor():
 def filtro_lista():
     global df
     if df.empty:
-        print("Data Frame vazio! ")
+        print("Lista vazia! ")
         return
     
-    print("Colunas do Data Frame: ",",".join(df.columns))
+    print("\nColunas da Lista: "," | ".join(df.columns))
     
-    nome_coluna = input("Introduza o nome da coluna onde pretende filtrar dados: ")
+    nome_coluna = input("\nIntroduza o nome da coluna onde pretende filtrar dados: ")
     
     if nome_coluna not in df.columns:
-        print(f"Erro! A coluna {nome_coluna} não existe no Data Frame!")
+        print(f"Erro! A coluna {nome_coluna} não existe na lista!")
         return None
     
-    tipo_dado = df[nome_coluna].dtype
-    
-    if pd.api.types.is_numeric_dtype(df[nome_coluna]):
+    if nome_coluna in ["Data do Início da Leitura", "Data do Fim da Leitura"]:
         try:
-            critério = float(input(f"Indique o critério a filtrar na {nome_coluna}: "))
-        except ValueError:
-            print("Erro! O critério de pesquisa não é um valor numérico! ")
-            return
-    elif nome_coluna ==  "Data do Início da Leitura" or nome_coluna == "Data do Fim da Leitura" or nome_coluna == pd.api.types.is_datetime64_any_dtype(tipo_dado):
-        try:
+            df[nome_coluna] = df[nome_coluna].astype(str)
             df[nome_coluna] = pd.to_datetime(df[nome_coluna], format="%d/%m/%Y", errors="coerce")
-            critério = pd.to_datetime(input(f"Indique a data (DD/MM/YYYY) que pretende filtrar na coluna '{nome_coluna}': "), dayfirst=True)        
-        except ValueError:
-            print("Erro! O critério não corresponde ao formato de data correto! ")
+            intervalo = input(f"Introduza duas datas (ex: 01/01/2023 31/12/2023): ")
+            data1, data2 = map(lambda x: pd.to_datetime(x, dayfirst=True), intervalo.replace(",", " ").split())
+            data_min, data_max = min(data1, data2), max(data1, data2)
+            filtro = df[(df[nome_coluna] >= data_min) & (df[nome_coluna] <= data_max)]
+        except:
+            print("Erro! Introduza duas datas válidas no formato DD/MM/YYYY.")
             return
-    
-    elif nome_coluna == "Ano de Publicação" or pd.api.types.is_datetime64_any_dtype(tipo_dado):
+
+    elif nome_coluna in "Data de Registo":
         try:
-            df[nome_coluna] = pd.to_datetime(df[nome_coluna], format="%Y", errors="coerce")
-            critério = pd.to_datetime(input(f"Indique a data (YYYY) que pretende filtrar na coluna '{nome_coluna}': "), format="%Y")
-        except ValueError:
-            print("Erro! O critério não corresponde ao formato de data correto! ")
+            df[nome_coluna] = df[nome_coluna].astype(str)
+            df[nome_coluna] = pd.to_datetime(df[nome_coluna], format="%d-%m-%Y %H:%M:%S", errors="coerce")
+            intervalo = input(f"Introduza duas datas (ex: 01/01/2023 00:00:00,30/01/2023 00:00:00): ")
+            data1, data2 = map(lambda x: pd.to_datetime(x, dayfirst=True), intervalo.replace(",", " ").split())
+            data_min, data_max = min(data1, data2), max(data1, data2)
+            filtro = df[(df[nome_coluna] >= data_min) & (df[nome_coluna] <= data_max)]
+        except:
+            print("Erro! Introduza duas datas válidas no formato DD/MM/YYYY HH:MM:SS")
             return
+    
+    elif nome_coluna == "Ano de Publicação":
+        try:
+            df[nome_coluna] = df[nome_coluna].astype(str)
+            df[nome_coluna] = pd.to_datetime(df[nome_coluna], format="%Y", errors="coerce")
+            intervalo = input(f"Introduza dois anos (ex: 2010 2020): ")
+            ano1, ano2 = map(lambda x: pd.to_datetime(x, format="%Y"), intervalo.replace(",", " ").split())
+            ano_min, ano_max = min(ano1, ano2), max(ano1, ano2)
+            filtro = df[(df[nome_coluna] >= ano_min) & (df[nome_coluna] <= ano_max)]
+        except:
+            print("Erro! Introduza dois anos válidos no formato YYYY.")
+            return
+    
+    elif pd.api.types.is_numeric_dtype(df[nome_coluna]):
+        try:
+            intervalo = input(f"Introduza dois valores (ex: 10 50) para filtrar '{nome_coluna}': ")
+            val1, val2 = map(float, intervalo.replace(",", " ").split())
+            minimo, maximo = min(val1, val2), max(val1, val2)
+            filtro = df[(df[nome_coluna] >= minimo) & (df[nome_coluna] <= maximo)]
+        except:
+            print("Erro! Introduza dois valores numéricos válidos.")
+            return
+
     else:
-         critério = float(input(f"Indique o critério a filtrar na {nome_coluna}: "))       
+        critério = input(f"Indique o critério a filtrar na coluna '{nome_coluna}': ")       
+        filtro = df[df[nome_coluna] == critério]
     
-    filtro = df[df[nome_coluna] == critério]
-    
-    print(f"Dados na {nome_coluna} que correspondem a {critério}: ")
+    print(f"Dados na coluna: {nome_coluna} ")
     if filtro.empty:
         print("Nenhum resultado encontrado!")
     else:    
