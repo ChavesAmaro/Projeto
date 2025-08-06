@@ -1,7 +1,3 @@
-import pickle
-from docx import Document
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from datetime import datetime
 import requests
@@ -11,6 +7,7 @@ import os
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from fuzzywuzzy import fuzz
 
 df = pd.DataFrame()
 
@@ -247,7 +244,6 @@ def export_pdf():
     doc.build(elementos)
     print(f"PDF criado com sucesso com o nome: {nome_arquivo}")
 
-
 def formatar_tempo(minutos):
     dias = minutos // 1440
     resto = minutos % 1440
@@ -284,9 +280,7 @@ def tempo_estimado_leitura_formatado():
             print("Número inválido.")
     except ValueError:
         print("Entrada inválida. Por favor, insira um número.")
-
-
-    
+ 
 def remover_livro():
     global df
     if df.empty:
@@ -427,8 +421,83 @@ def filtro_lista():
     else:    
         print(filtro_formatado)   
     print()      
-    
 
+def menu_estatisticas_leitura():
+    global df
+    if df.empty:
+        print("A lista está vazia!")
+        return
+ 
+    df["Ano de Leitura"] = pd.to_datetime(df["Data do Fim da Leitura"], format="%Y-%m-%d %H:%M:%S", errors="coerce").dt.year
+    df_validos = df.dropna(subset=["Ano de Leitura"])
+    df_validos.loc[:,"Ano de Leitura"] = df_validos["Ano de Leitura"].astype(int)
+    estatisticas_ano = df_validos["Ano de Leitura"].value_counts().sort_index()
+    estatisticas_ano.index = estatisticas_ano.index.astype(int)
+
+    loop_menu_estatistica = True
+    while loop_menu_estatistica == True:
+        print("\nMenu de Estatísticas")
+        print("1. Número de Livros Lidos por Ano")
+        print("2. Número de Livros Lidos por Tema")
+        print("3. Número de Livros Lidos por Autor")
+        print("4. Número de Livros Lidos por Edição")
+        print("5. Voltar ao Menu Principal")
+        escolha_menu_estatistico = input("\nEscolha uma opção de 1 a 5: ")
+        
+        if escolha_menu_estatistico == '1':
+            print("\nLivros lidos por Ano:")
+            print(estatisticas_ano.to_string(name=False))
+        elif escolha_menu_estatistico == '2':
+            por_tema = df["Tema Principal"].value_counts()
+            print("\nLivros lidos por Tema:")
+            print(por_tema.to_string(name=False))
+        elif escolha_menu_estatistico == '3':
+            por_autor = df["Autor"].value_counts()
+            print("\nLivros lidos por Autor:")
+            print(por_autor.to_string(name=False))
+        elif escolha_menu_estatistico == '4':
+            por_edicao = df["Edicao"].value_counts().sort_index()
+            print("\nLivros lidos por Edição:")
+            print(por_edicao.to_string(name=False))
+        elif escolha_menu_estatistico == '5':
+            loop_menu_estatistica = False
+        else:
+            print("\nErro! Escolha um número de 1 a 5.")
+
+def pesquisa_inteligente_fuzzy():
+    global df
+    if df.empty:
+        print("A lista está vazia!")
+        return
+
+    termo = input("\nIntroduza termo de pesquisa: ").strip().lower()
+    limiar_similaridade = 70  # entre 0 e 100
+
+    colunas_alvo = ["Título", "Autor"]
+    resultados = pd.DataFrame()
+
+    for coluna in colunas_alvo:
+        if coluna in df.columns:
+            similares = df[df[coluna].astype(str).apply(lambda x: fuzz.partial_ratio(termo, x.lower()) >= limiar_similaridade)]
+            resultados = pd.concat([resultados, similares])
+
+    resultados = resultados.drop_duplicates()
+
+    if resultados.empty:
+        print("Nenhum resultado encontrado.")
+    else:
+        resultados_formatado = resultados.copy()
+        resultados_formatado["Data do Início da Leitura"] = resultados_formatado["Data do Início da Leitura"].apply(
+            lambda x: x.strftime("%d/%m/%Y") if isinstance(x, datetime) else x)
+        resultados_formatado["Data do Fim da Leitura"] = resultados_formatado["Data do Fim da Leitura"].apply(
+            lambda x: x.strftime("%d/%m/%Y") if isinstance(x, datetime) else x)
+        resultados_formatado["Ano de Publicação"] = resultados_formatado["Ano de Publicação"].apply(
+            lambda x: x.strftime("%Y") if isinstance(x, datetime) else x)
+
+        print(f"\nResultados aproximados para '{termo}':\n")
+        print(resultados_formatado)
+    print()
+    
 def main():
     loop_menu = True
     while loop_menu == True:
@@ -442,7 +511,9 @@ def main():
         print("7. Remover Livro")
         print("8. Editar Valor")
         print("9. Filtrar Lista")
-        print("10. Sair")
+        print("10. Menu de Estatisticas de Leitura")
+        print("11. Pesquisa Inteligente de Livros")
+        print("12. Sair")
 
         escolha_menu_principal = input("\nEscolha uma opção de 1 a 6: ").strip() #mudar no final para o nº de opções
         
@@ -465,6 +536,10 @@ def main():
         elif escolha_menu_principal == '9':
             filtro_lista()
         elif escolha_menu_principal == '10':
+            menu_estatisticas_leitura()
+        elif escolha_menu_principal == '11':
+            pesquisa_inteligente_fuzzy()
+        elif escolha_menu_principal == '12':
             print("\nA encerrar o programa...")
             loop_menu = False
         else:
