@@ -412,11 +412,20 @@ def filtro_lista():
         critério = input(f"Indique o critério a filtrar na coluna '{nome_coluna}': ")       
         filtro = df[df[nome_coluna] == critério]
     
+    filtro_formatado = filtro.copy()
+    
+    filtro_formatado["Data do Início da Leitura"] = filtro_formatado["Data do Início da Leitura"].apply(
+        lambda x: x.strftime("%d/%m/%Y") if isinstance(x, datetime) else x)
+    filtro_formatado["Data do Fim da Leitura"] = filtro_formatado["Data do Fim da Leitura"].apply(
+        lambda x: x.strftime("%d/%m/%Y") if isinstance(x, datetime) else x)
+    filtro_formatado["Ano de Publicação"] = filtro_formatado["Ano de Publicação"].apply(
+        lambda x: x.strftime("%Y") if isinstance(x, datetime) else x)
+    
     print(f"Dados na coluna: {nome_coluna} ")
     if filtro.empty:
         print("Nenhum resultado encontrado!")
     else:    
-        print(filtro)   
+        print(filtro_formatado)   
     print()      
     
 
