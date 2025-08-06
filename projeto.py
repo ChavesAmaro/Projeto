@@ -247,6 +247,157 @@ def export_pdf():
     doc.build(elementos)
     print(f"PDF criado com sucesso com o nome: {nome_arquivo}")
 
+
+def formatar_tempo(minutos):
+    dias = minutos // 1440
+    resto = minutos % 1440
+    horas = resto // 60
+    mins = resto % 60
+    return f"{dias} dia{'s' if dias != 1 else ''} {horas} hora{'s' if horas != 1 else ''} {mins} minuto{'s' if mins != 1 else ''}"
+
+def tempo_estimado_leitura_formatado():
+    global df
+    if df.empty:
+        print("\nA lista está vazia!")
+        return
+
+    
+    print("\nEscolha um livro para ver o tempo estimado de leitura:\n")
+    for i, row in df.iterrows():
+        print(f"{i + 1}. {row['Título']} ({row['Autor']})")
+
+    try:
+        escolha = int(input("\nDigite o número do livro: ")) - 1
+        if 0 <= escolha < len(df):
+            paginas = df.loc[escolha, "Páginas"]
+            titulo = df.loc[escolha, "Título"]
+            autor = df.loc[escolha, "Autor"]
+            tempo_min = formatar_tempo(paginas * 1)
+            tempo_medio = formatar_tempo(paginas * 2)
+            tempo_max = formatar_tempo(paginas * 3)
+
+            print(f"\nTempo estimado de leitura para '{titulo}' ({autor}):")
+            print(f"  → Mínimo: {tempo_min}")
+            print(f"  → Médio: {tempo_medio}")
+            print(f"  → Máximo: {tempo_max}\n")
+        else:
+            print("Número inválido.")
+    except ValueError:
+        print("Entrada inválida. Por favor, insira um número.")
+
+
+    
+def remover_livro():
+    global df
+    if df.empty:
+        print("Data Frame vazio! ")
+        return
+    consultar_lista()
+    
+    try:
+        linha = int(input("Indique o livro a remover: "))
+        
+        if linha not in df.index:
+            print(f"Erro! O índice '{linha}' é inválido!")
+            return None
+        
+        df.drop(index = linha, inplace=True)
+        print(f"Linha {linha} removida com sucesso! ")
+    except ValueError:
+        print("Erro! O índice da linha deve ser um número inteiro! ")
+    print()
+
+def editar_valor():
+    global df
+    if df.empty:
+        print("Data Frame vazio! ")
+        return
+    consultar_lista()
+    try:
+        linha = int(input("Indique o id da linha a alterar: "))
+        nome_coluna = input("Indique em qual coluna pretende alterar o dado: ")
+
+        if linha not in df.index:
+            print(f"Erro! O índice '{linha}' é inválido!")
+            return None
+        
+        if nome_coluna not in df.columns:
+            print(f"Erro! A coluna '{nome_coluna}' não está registada!")
+            return None
+        
+        tipo = df[nome_coluna].dtype
+        
+        while True:
+            novo_dado = input(f"Indique o novo dado para o índice {linha}, na coluna {nome_coluna} ({tipo}): ").strip()
+            try:
+                if tipo == 'float64':
+                    dado_convertido = float(novo_dado)
+                elif tipo == 'int64':
+                    dado_convertido = int(novo_dado)
+                elif tipo == 'datetime64[ns]':
+                    dado_convertido = pd.to_datetime(novo_dado, dayfirst=True)
+                else:
+                    dado_convertido = novo_dado
+                break
+            except ValueError:
+                print(f"Erro! O dado inserido não corresponde ao tipo esperado ({tipo})")
+
+        df.at[linha, nome_coluna] = dado_convertido
+        print("Dados atualizados com sucesso! ")
+    except ValueError:
+        print("Erro! O id da linha deve ser um número inteiro! ")
+    print()
+
+def filtro_lista():
+    global df
+    if df.empty:
+        print("Data Frame vazio! ")
+        return
+    
+    print("Colunas do Data Frame: ",",".join(df.columns))
+    
+    nome_coluna = input("Introduza o nome da coluna onde pretende filtrar dados: ")
+    
+    if nome_coluna not in df.columns:
+        print(f"Erro! A coluna {nome_coluna} não existe no Data Frame!")
+        return None
+    
+    tipo_dado = df[nome_coluna].dtype
+    
+    if pd.api.types.is_numeric_dtype(df[nome_coluna]):
+        try:
+            critério = float(input(f"Indique o critério a filtrar na {nome_coluna}: "))
+        except ValueError:
+            print("Erro! O critério de pesquisa não é um valor numérico! ")
+            return
+    elif nome_coluna ==  "Data do Início da Leitura" or nome_coluna == "Data do Fim da Leitura" or nome_coluna == pd.api.types.is_datetime64_any_dtype(tipo_dado):
+        try:
+            df[nome_coluna] = pd.to_datetime(df[nome_coluna], format="%d/%m/%Y", errors="coerce")
+            critério = pd.to_datetime(input(f"Indique a data (DD/MM/YYYY) que pretende filtrar na coluna '{nome_coluna}': "), dayfirst=True)        
+        except ValueError:
+            print("Erro! O critério não corresponde ao formato de data correto! ")
+            return
+    
+    elif nome_coluna == "Ano de Publicação" or pd.api.types.is_datetime64_any_dtype(tipo_dado):
+        try:
+            df[nome_coluna] = pd.to_datetime(df[nome_coluna], format="%Y", errors="coerce")
+            critério = pd.to_datetime(input(f"Indique a data (YYYY) que pretende filtrar na coluna '{nome_coluna}': "), format="%Y")
+        except ValueError:
+            print("Erro! O critério não corresponde ao formato de data correto! ")
+            return
+    else:
+         critério = float(input(f"Indique o critério a filtrar na {nome_coluna}: "))       
+    
+    filtro = df[df[nome_coluna] == critério]
+    
+    print(f"Dados na {nome_coluna} que correspondem a {critério}: ")
+    if filtro.empty:
+        print("Nenhum resultado encontrado!")
+    else:    
+        print(filtro)   
+    print()      
+    
+
 def main():
     loop_menu = True
     while loop_menu == True:
@@ -255,8 +406,12 @@ def main():
         print("2. Consultar Lista de Livros")
         print("3. Exportar a Lista Para Ficheiro .xlsx")
         print("4. Importar a Lista de Ficheiro .xlsx")
-        print("5. Exportar para .pdf")
-        print("6. Sair")
+        print("5. Exportar Para .pdf")
+        print("6. Calcular Tempo Estimado de Leitura")
+        print("7. Remover Livro")
+        print("8. Editar Valor")
+        print("9. Filtrar Lista")
+        print("10. Sair")
 
         escolha_menu_principal = input("\nEscolha uma opção de 1 a 6: ").strip() #mudar no final para o nº de opções
         
@@ -271,6 +426,14 @@ def main():
         elif escolha_menu_principal == '5':
             export_pdf()
         elif escolha_menu_principal == '6':
+            tempo_estimado_leitura_formatado()
+        elif escolha_menu_principal == '7':
+            remover_livro()
+        elif escolha_menu_principal == '8':
+            editar_valor()
+        elif escolha_menu_principal == '9':
+            filtro_lista()
+        elif escolha_menu_principal == '10':
             print("\nA encerrar o programa...")
             loop_menu = False
         else:
