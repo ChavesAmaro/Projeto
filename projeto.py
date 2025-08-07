@@ -8,6 +8,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from fuzzywuzzy import fuzz
+#import mysql.connector
 
 df = pd.DataFrame()
 
@@ -23,6 +24,20 @@ preco = []
 tema_principal = []
 avaliacao = []
 link_google = []
+
+#def ligar_mysql():
+#   try:
+#        conexao = mysql.connector.connect(
+#            host="",
+#            user="",
+#            password="",
+#            database=""
+#        )
+#        print("Ligação à BD feita com sucesso!")
+#        return conexao
+#    except mysql.connector.Error as err:
+#        print(f"Erro ao ligar à base de dados: {err}")
+#        return None
 
 def configure():
     load_dotenv()
@@ -497,7 +512,42 @@ def pesquisa_inteligente_fuzzy():
         print(f"\nResultados aproximados para '{termo}':\n")
         print(resultados_formatado)
     print()
+
+#def enviar_df_para_mysql(df, conexao):
+#   if df.empty:
+#        print("Erro! DataFrame vazio.")
+#        return
+
+#    cursor = conexao.cursor()
     
+#    for _, row in df.iterrows():
+#        sql = """
+#            INSERT INTO livros (
+#                data_inicio, data_fim, data_registo, autor, titulo,
+#                ano_publicacao, preco, edicao, paginas,
+#                tema_principal, avaliacao, link_google
+#            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+#        """
+#        valores = (
+#            row["Data do Início da Leitura"] if not pd.isna(row["Data do Início da Leitura"]) else None,
+#            row["Data do Fim da Leitura"] if not pd.isna(row["Data do Fim da Leitura"]) else None,
+#            row["Data de Registo"],
+#            row["Autor"],
+#            row["Título"],
+#            int(row["Ano de Publicação"].year) if isinstance(row["Ano de Publicação"], pd.Timestamp) else row["Ano de Publicação"],
+#            float(row["Preço"]),
+#            int(row["Edicao"]),
+#            int(row["Páginas"]),
+#            row["Tema Principal"],
+#            float(row["Avaliação Pessoal"]),
+#            row["Link Google Books"]
+#        )
+#        cursor.execute(sql, valores)
+
+#    conexao.commit()
+#    print("Dados enviados com sucesso para a base de dados!")
+#    cursor.close()
+
 def main():
     loop_menu = True
     while loop_menu == True:
@@ -515,7 +565,7 @@ def main():
         print("11. Pesquisa Inteligente de Livros")
         print("12. Sair")
 
-        escolha_menu_principal = input("\nEscolha uma opção de 1 a 6: ").strip() #mudar no final para o nº de opções
+        escolha_menu_principal = input("\nEscolha uma opção de 1 a 12: ").strip() 
         
         if escolha_menu_principal == '1':
             adicionar_lista()
@@ -543,7 +593,7 @@ def main():
             print("\nA encerrar o programa...")
             loop_menu = False
         else:
-            print("Erro! Escolha um número de 1 a 6.") #mudar no final para o nº de opções
+            print("Erro! Escolha um número de 1 a 12.")
 
 if __name__ == "__main__":
     print("\n\n")
